@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #4B0082; /* Purple background */
+            color: white; /* White text color */
+            position: relative;
+            overflow: hidden; /* Prevents overflow from moving badges */
+        }
+
+        h1 {
+            margin-bottom: 40px;
+            font-size: 3em; /* Larger title */
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5); /* Shadow effect for title */
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent button */
+            border: none;
+            border-radius: 5px;
+            color: white;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.4); /* Lighten on hover */
+        }
+
+        /* Badge styles */
+        .badge {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-image: url('https://cdn-icons-png.flaticon.com/512/263/263115.png'); /* Computer icon */
+            background-size: contain;
+            background-repeat: no-repeat;
+            animation: moveBadge 5s linear infinite;
+            opacity: 0.8; /* Slight transparency */
+        }
+
+        /* Animation for moving badges */
+        @keyframes moveBadge {
+            0% {
+                transform: translate(0, 0);
+            }
+            50% {
+                transform: translate(200px, 100px);
+            }
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        /* Positioning badges in different corners */
+        .badge1 {
+            top: 20%;
+            left: 10%;
+        }
+        .badge2 {
+            bottom: 20%;
+            right: 10%;
+        }
+        .badge3 {
+            top: 30%;
+            right: 15%;
+        }
+    </style>
+</head>
+<body>
+    <h1>enwatechx</h1>
+    <button onclick="window.location.href='manager.html'">Manager</button>
+    <button onclick="window.location.href='employee.html'">Employee</button>
+
+    <!-- Moving badges -->
+    <div class="badge badge1"></div>
+    <div class="badge badge2"></div>
+    <div class="badge badge3"></div>
+</body>
+</html>

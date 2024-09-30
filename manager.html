@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(40, 0, 80, 0.8), rgba(100, 0, 150, 0.8));
+            color: white;
+            position: relative;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            animation: move 15s linear infinite;
+            background: rgba(150, 0, 255, 0.2);
+        }
+
+        @keyframes move {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 300px;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            background-color: #ffffff;
+            color: #333;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 10px;
+        }
+
+        .order {
+            background: white;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: black;
+        }
+
+        .cancel-button {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+
+        .cancel-button:hover {
+            background-color: #c82333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgb(0,0,0); 
+            background-color: rgba(0,0,0,0.4); 
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px; 
+            text-align: center;
+        }
+        .modal button {
+            margin: 10px;
+        }
+
+        #employeeWorkFrequency {
+            margin-top: 20px;
+        }
+    </style>
+    <script type="module">
+      const correctPassword = "enwa10";
+      const userPassword = prompt("Enter the manager password:");
+
+      if (userPassword !== correctPassword) {
+          alert("Incorrect password. Access denied.");
+          window.location.href = "index.html";  // Redirect to main page or another page
+      }
+
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+      import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js"; 
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDdJ6AGfdSMrVs6YwnoJaw1PF95m6n2LeM",
+        authDomain: "company-a6264.firebaseapp.com",
+        projectId: "company-a6264",
+        storageBucket: "company-a6264.appspot.com",
+        messagingSenderId: "365291928451",
+        appId: "1:365291928451:web:80eb87bb8d31cf33ded4b6"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      window.sendOrder = async function() {
+          const orderDetails = document.getElementById("orderDetails").value;
+          if (!orderDetails) {
+              alert("Please enter order details.");
+              return;
+          }
+
+          const ordersRef = collection(db, "orders");
+          const q = query(ordersRef, where("details", "==", orderDetails));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+              document.getElementById('modalMessage').textContent = "This order has occurred before. Please ensure that the order is being done properly!";
+              document.getElementById('orderDetailsToSend').textContent = orderDetails;
+              document.getElementById('duplicateModal').style.display = "block";
+              return;
+          }
+
+          await addDoc(collection(db, "orders"), {
+              details: orderDetails,
+              status: "pending",
+              timestamp: serverTimestamp()
+          });
+
+          alert("Order sent!");
+          document.getElementById("orderDetails").value = "";  
+          loadOrders();  
+          loadPreviousOrders();  
+      }
+
+      window.sendOrderAnyway = async function(orderDetails) {
+          await addDoc(collection(db, "orders"), {
+              details: orderDetails,
+              status: "pending",
+              timestamp: serverTimestamp()
+          });
+
+          alert("Order sent despite being a duplicate!");
+          document.getElementById("orderDetails").value = "";  
+          loadOrders();  
+          loadPreviousOrders();  
+          document.getElementById('duplicateModal').style.display = "none"; 
+      }
+
+      window.closeModal = function() {
+          document.getElementById('duplicateModal').style.display = "none"; 
+      }
+
+      async function loadOrders() {
+          const orderList = document.getElementById("orderList");
+          orderList.innerHTML = '';  
+
+          const ordersRef = collection(db, "orders");
+          const q = query(ordersRef, where("status", "==", "pending"));
+          const querySnapshot = await getDocs(q);
+
+          querySnapshot.forEach((doc) => {
+              const order = doc.data();
+              orderList.innerHTML += `<div class="order">
+                                        <p>Order: ${order.details}</p>
+                                        <button class="cancel-button" onclick="cancelOrder('${doc.id}')">Cancel</button>
+                                      </div>`;
+          });
+      }
+
+      async function loadPreviousOrders() {
+          const previousOrderList = document.getElementById("previousOrderList");
+          previousOrderList.innerHTML = '';  
+
+          const ordersRef = collection(db, "orders");
+          const q = query(ordersRef, where("status", "in", ["accepted", "rejected", "finished"]));
+          const querySnapshot = await getDocs(q);
+
+          let employeeCount = {}; 
+
+          querySnapshot.forEach((doc) => {
+              const order = doc.data();
+              previousOrderList.innerHTML += `<div class="order">
+                                                <p>Order: ${order.details} - Accepted by: ${order.employee || 'N/A'} on ${order.timestamp?.toDate().toLocaleString()}</p>
+                                                <p>Status: ${order.status}</p>
+                                              </div>`;
+              if (order.employee) {
+                  employeeCount[order.employee] = (employeeCount[order.employee] || 0) + 1;
+              }
+          });
+
+          displayEmployeeWorkFrequency(employeeCount);
+      }
+
+      function displayEmployeeWorkFrequency(employeeCount) {
+          const employeeWorkFrequency = document.getElementById("employeeWorkFrequency");
+          employeeWorkFrequency.innerHTML = '<h2>Employee Work Frequency</h2>';
+          for (const employee in employeeCount) {
+              employeeWorkFrequency.innerHTML += `<p>${employee}: ${employeeCount[employee]} orders</p>`;
+          }
+      }
+
+      window.clearPreviousOrders = async function() {
+          const ordersRef = collection(db, "orders");
+          const q = query(ordersRef, where("status", "in", ["accepted", "rejected", "finished"]));
+          const querySnapshot = await getDocs(q);
+
+          querySnapshot.forEach(async (doc) => {
+              await deleteDoc(doc.ref);
+          });
+
+          alert("All previous orders cleared!");
+          loadPreviousOrders(); 
+      }
+
+      window.cancelOrder = async function(orderId) {
+          const orderRef = doc(db, "orders", orderId); 
+          await deleteDoc(orderRef);
+          alert("Order canceled!");
+          loadOrders(); 
+          loadPreviousOrders(); 
+      }
+
+      window.onload = function() {
+          loadOrders();
+          loadPreviousOrders();
+      }
+    </script>
+</head>
+<body>
+    <div class="background-animation"></div>
+    <h1>Manager Page</h1>
+
+    <textarea id="orderDetails" placeholder="Enter order details..."></textarea>
+    <button onclick="sendOrder()">Send Order</button>
+
+    <h2>Pending Orders</h2>
+    <div id="orderList"></div>
+
+    <h2>Previous Orders</h2>
+    <div id="previousOrderList"></div>
+    <button onclick="clearPreviousOrders()">Clear All Previous Orders</button>
+
+    <div id="employeeWorkFrequency"></div>
+
+    <!-- Modal for duplicate orders -->
+    <div id="duplicateModal" class="modal">
+        <div class="modal-content">
+            <p id="modalMessage"></p>
+            <p>Order Details: <span id="orderDetailsToSend"></span></p>
+            <button onclick="sendOrderAnyway(orderDetailsToSend.textContent)">Send Anyway</button>
+            <button onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</body>
+</html>
